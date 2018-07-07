@@ -1,0 +1,98 @@
+100 rem === basic month 3: cannonball
+110 rem === http://reddit.com/r/retrobattlestations
+120 rem === written by fozztexx
+130 rem === c64 ascii version by kohai-io
+
+200 rem === clear screen and setup variables
+205 rem === add {ins}{shift+home} to print @210
+210 print ""
+220 cl = 40:rw = 24:rem columns and rows of screen
+230 ca = 45:cn = 5:rem angle and length of cannon
+240 cx = 5:px = cl-5:sc = 0:lv = 3
+250 pi = 3.14159
+
+300 rem === play game
+310 cv = int(rnd(1) * 15) + 10:gosub 4010:gosub 2010
+320 gosub 2510
+330 if ke$ = "8" then ca = ca + 5 :if ca > 85 then ca = 85
+340 if ke$ = "2" then ca = ca -5 :if ca < 15 then ca = 15
+350 if ke$ = "q" or ke$ = "q" then end
+360 if ke$ = " " then 400
+370 gosub 1010
+380 goto 320
+
+400 rem === fire!
+420 bx = cx + lx:by = rw + ly
+430 gosub 1510
+440 vx = cv * cos((360 - ca) * pi / 180):vy = cv * sin((360 - ca) * pi / 180)
+
+500 rem === move player and animate ball
+510 gosub 2510
+520 if ke$ = chr$(8) then px = px - 1:if px < cx+cn then px = cx+cn
+530 if ke$ = chr$(21) then px = px + 1:if px > cl - 1 then px = cl -1
+540 gosub 2010
+550 bx = bx + (vx / 10):by = by + (vy / 10):gosub 1510
+560 vy = vy + 2
+570 if by < rw then 510
+580 p$=" ":x1%=bx%:y1%=by%:gosub 3510
+
+600 rem === score or die
+610 lx = bx - bx%:ly = by - by%:l2 = rw - by%
+620 ix = bx% + lx * (l2 / ly)
+630 if ix >= px - 1 and ix <= px + 1 then sc = sc + 10:goto 310
+640 lv = lv - 1:gosub 4010
+650 if lv < 1 then p$="game over" : goto670
+660 goto 310
+670 x1% = (cl - len(p$)) / 2 :y1% = rw / 2
+680 gosub 3510 :end
+
+1000 rem === draw cannon
+1010 p$="angle: "+str$(ca)+" ":x1%=2:y1%=1:gosub 3510
+1030 if (ca = la) then return
+1040 lx = cn * cos((360 - la) * pi / 180):ly = cn * sin((360 - la) * pi / 180)
+1050 x1 = cx:y1 = rw:x2 = x1 + lx:y2 = y1 + ly:p$ = " ":gosub 3010
+1060 lx = cn * cos((360 - ca) * pi / 180):ly = cn * sin((360 - ca) * pi / 180)
+1070 x2 = x1 + lx:y2 = y1 + ly:p$= "%":gosub 3010
+1080 la=ca:return
+1500 rem === draw ball
+1510 x1% = bx:y1% = by:p$="o":gosub 3510
+1520 if bx% <> x1% or by% <> y1% then x1%=bx%:y1%=by%:p$=" ":gosub 3510
+1530 bx% = bx:by% = by
+1540 return
+
+2000 rem === draw player
+2010 p$="u":x1% = px:y1% = rw:gosub 3510
+2020 if px% <> x1% then x1%=px%:p$=" ":gosub 3510
+2030 px% = px
+2040 return
+2500 rem === read the keyboard
+2510 ke$ = "" : if peek(197) > 0 then get ke$
+2520 return
+
+3000 rem === plot a line
+3010 x1% = x1:x2% = x2:y1% = y1:y2% = y2
+3020 dx% = abs(x2% - x1%):sx% = -1:if x1% < x2% then sx% = 1
+3030 dy% = abs(y2% - y1%):sy% = -1:if y1% < y2% then sy% = 1
+3040 er% = -dy%:if dx% > dy% then er% = dx%
+3050 er% = er% / 2
+3060 gosub 3510
+3070 if x1% = x2% and y1% = y2% then return
+3080 e2% = er%
+3090 if e2% > -dx% then er% = er% - dy%:x1% = x1% + sx%
+3100 if x1% = x2% and y1% = y2% then return
+3110 if e2% < dy% then er% = er% + dx%:y1% = y1% + sy%
+3120 if x1% = x2% and y1% = y2% then return
+3130 goto 3060
+3500 rem === plot a point
+3510 if x1% < 1 or x1% > cl or y1% < 1 or y1% > rw then return
+3520 poke 214,y1%-1 :poke 211,x1%-1 :sys 58732
+3530 print p$;
+3540 return
+
+4000 rem === show score/lives/velocity
+4010 p$="velocity: "+str$(cv)+" ":x1% = cl / 3:y1%=1:gosub 3510
+4020 p$="score: "+str$(sc):x1% = cl * 2 / 3:gosub 3510
+4030 p$=mid$("   uuu",lv+1,3) :x1% = cl -2 :gosub 3510
+4040 x1% = cl - 2
+4050 gosub 3510
+4060 return
